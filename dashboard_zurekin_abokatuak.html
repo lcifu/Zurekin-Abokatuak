@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Zurekin Abokatuak - Monitorización en Tiempo Real</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: #333;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 {
+            color: #388E3C;
+            font-size: 28px;
+        }
+
+        .timestamp {
+            font-size: 16px;
+            color: #666;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .card h2 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #388E3C;
+            border-bottom: 2px solid #388E3C;
+            padding-bottom: 10px;
+        }
+
+        .server-status {
+            margin-bottom: 15px;
+        }
+
+        .server-name {
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .status-ok {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .status-warning {
+            background: #FF9800;
+            color: white;
+        }
+
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            margin: 5px 0;
+            font-size: 14px;
+        }
+
+        .metric-label {
+            color: #666;
+        }
+
+        .metric-value {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 5px 0 10px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #388E3C, #4CAF50);
+            transition: width 0.5s ease;
+        }
+
+        .progress-fill.warning {
+            background: linear-gradient(90deg, #FF9800, #FFC107);
+        }
+
+        .progress-fill.danger {
+            background: linear-gradient(90deg, #D32F2F, #F44336);
+        }
+
+        .chart-container {
+            position: relative;
+            height: 250px;
+            margin-top: 10px;
+        }
+
+        .events-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .event-item {
+            padding: 10px;
+            margin: 8px 0;
+            border-left: 4px solid #388E3C;
+            background: #f5f5f5;
+            border-radius: 4px;
+            font-size: 13px;
+            animation: slideIn 0.5s ease;
+        }
+
+        .event-item.warning {
+            border-left-color: #FF9800;
+        }
+
+        .event-item.error {
+            border-left-color: #D32F2F;
+        }
+
+        .event-time {
+            font-weight: bold;
+            color: #388E3C;
+            margin-right: 8px;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .backup-calendar {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+            margin-top: 15px;
+        }
+
+        .day {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .day.success {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .day.pending {
+            background: #e0e0e0;
+            color: #999;
+        }
+
+        .day.today {
+            background: #388E3C;
+            color: white;
+            border: 2px solid #FFD700;
+        }
+
+        .storage-info {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 8px;
+        }
+
+        .storage-bar {
+            width: 100%;
+            height: 30px;
+            background: #e0e0e0;
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 10px 0;
+            position: relative;
+        }
+
+        .storage-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #388E3C, #4CAF50);
+            transition: width 1s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .wide-card {
+            grid-column: 1 / -1;
+        }
+
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.7;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div>
+                <h1>🛡️ Dashboard Zurekin Abokatuak</h1>
+                <p style="color: #666; margin-top: 5px;">Monitorización en Tiempo Real - Infraestructura IT</p>
+            </div>
+            <div class="timestamp" id="timestamp"></div>
+        </header>
+
+        <div class="grid">
+            <!-- Estado de Servidores -->
+            <div class="card">
+                <h2>💻 Estado de Servidores</h2>
+                <div class="server-status">
+                    <div class="server-name">
+                        VM-DC01
+                        <span class="status-badge status-ok pulse">✅ Operativo</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">CPU:</span>
+                        <span class="metric-value" id="cpu-dc01">45%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="cpu-bar-dc01" style="width: 45%"></div>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">RAM:</span>
+                        <span class="metric-value" id="ram-dc01">3.2 GB / 4 GB</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill warning" id="ram-bar-dc01" style="width: 80%"></div>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Sistema:</span>
+                        <span class="metric-value">Windows Server 2022</span>
+                    </div>
+                </div>
+
+                <div class="server-status">
+                    <div class="server-name">
+                        VM-Nextcloud
+                        <span class="status-badge status-ok pulse">✅ Operativo</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">CPU:</span>
+                        <span class="metric-value" id="cpu-nextcloud">32%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="cpu-bar-nextcloud" style="width: 32%"></div>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">RAM:</span>
+                        <span class="metric-value" id="ram-nextcloud">2.8 GB / 4 GB</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="ram-bar-nextcloud" style="width: 70%"></div>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Sistema:</span>
+                        <span class="metric-value">Ubuntu 22.04 LTS</span>
+                    </div>
+                </div>
+
+                <div class="server-status">
+                    <div class="server-name">
+                        VM-Web
+                        <span class="status-badge status-ok pulse">✅ Operativo</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">CPU:</span>
+                        <span class="metric-value" id="cpu-web">18%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="cpu-bar-web" style="width: 18%"></div>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">RAM:</span>
+                        <span class="metric-value" id="ram-web">1.5 GB / 2 GB</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill warning" id="ram-bar-web" style="width: 75%"></div>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Sistema:</span>
+                        <span class="metric-value">Ubuntu 22.04 LTS</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tráfico de Red -->
+            <div class="card">
+                <h2>🌐 Tráfico de Red por VLAN</h2>
+                <div class="chart-container">
+                    <canvas id="networkChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Eventos de Seguridad -->
+            <div class="card">
+                <h2>🔒 Eventos de Seguridad</h2>
+                <div class="events-list" id="eventsList">
+                    <!-- Los eventos se añadirán dinámicamente -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Estado de Copias de Seguridad -->
+        <div class="grid">
+            <div class="card wide-card">
+                <h2>💾 Estado de Copias de Seguridad</h2>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div>
+                        <h3 style="font-size: 16px; margin-bottom: 10px;">Calendario de Backups</h3>
+                        <div class="backup-calendar" id="backupCalendar">
+                            <!-- Se generará dinámicamente -->
+                        </div>
+                        <div style="margin-top: 15px; font-size: 13px;">
+                            <div style="margin: 5px 0;">
+                                <span style="display: inline-block; width: 15px; height: 15px; background: #4CAF50; border-radius: 3px; margin-right: 8px;"></span>
+                                Backup exitoso
+                            </div>
+                            <div style="margin: 5px 0;">
+                                <span style="display: inline-block; width: 15px; height: 15px; background: #388E3C; border: 2px solid #FFD700; border-radius: 3px; margin-right: 8px;"></span>
+                                Hoy
+                            </div>
+                            <div style="margin: 5px 0;">
+                                <span style="display: inline-block; width: 15px; height: 15px; background: #e0e0e0; border-radius: 3px; margin-right: 8px;"></span>
+                                Pendiente
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 style="font-size: 16px; margin-bottom: 10px;">Información de Almacenamiento</h3>
+                        <div class="storage-info">
+                            <div class="metric">
+                                <span class="metric-label">Última copia:</span>
+                                <span class="metric-value">Hoy 02:00 - ✅ Exitosa</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-label">Tamaño:</span>
+                                <span class="metric-value">125 GB</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-label">Próxima copia:</span>
+                                <span class="metric-value">Mañana 02:00</span>
+                            </div>
+                            <div class="metric" style="margin-top: 15px;">
+                                <span class="metric-label">Espacio en NAS:</span>
+                                <span class="metric-value">1.2 TB / 3.6 TB (33%)</span>
+                            </div>
+                            <div class="storage-bar">
+                                <div class="storage-fill" id="storageBar" style="width: 33%">
+                                    33% usado
+                                </div>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-label">Dispositivo:</span>
+                                <span class="metric-value">Synology DS923+ NAS</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Actualizar timestamp
+        function updateTimestamp() {
+            const now = new Date();
+            const options = { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric', 
+                hour: '2-digit', 
+                minute: '2-digit', 
+                second: '2-digit' 
+            };
+            document.getElementById('timestamp').textContent = now.toLocaleDateString('es-ES', options);
+        }
+        updateTimestamp();
+        setInterval(updateTimestamp, 1000);
+
+        // Gráfico de tráfico de red
+        const ctx = document.getElementById('networkChart').getContext('2d');
+        const networkChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['VLAN 10\n(Usuarios)', 'VLAN 20\n(Servidores)', 'VLAN 30\n(DMZ)', 'VLAN 40\n(Gestión)'],
+                datasets: [{
+                    label: 'Tráfico (Mbps)',
+                    data: [125, 85, 45, 12],
+                    backgroundColor: [
+                        'rgba(56, 142, 60, 0.8)',
+                        'rgba(33, 150, 243, 0.8)',
+                        'rgba(255, 152, 0, 0.8)',
+                        'rgba(156, 39, 176, 0.8)'
+                    ],
+                    borderColor: [
+                        'rgba(56, 142, 60, 1)',
+                        'rgba(33, 150, 243, 1)',
+                        'rgba(255, 152, 0, 1)',
+                        'rgba(156, 39, 176, 1)'
+                    ],
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 150,
+                        ticks: {
+                            callback: function(value) {
+                                return value + ' Mbps';
+                            }
+                        }
+                    }
+                },
+                animation: {
+                    duration: 2000
+                }
+            }
+        });
+
+        // Actualizar gráfico periódicamente
+        setInterval(() => {
+            networkChart.data.datasets[0].data = networkChart.data.datasets[0].data.map(val => {
+                const variation = (Math.random() - 0.5) * 20;
+                return Math.max(10, Math.min(150, val + variation));
+            });
+            networkChart.update();
+        }, 3000);
+
+        // Eventos de seguridad
+        const events = [
+            { time: '10:23', text: 'Firewall bloqueó intento de acceso no autorizado desde IP 203.45.67.89', type: 'warning' },
+            { time: '10:18', text: 'Actualización de firmas de antivirus completada', type: 'success' },
+            { time: '10:12', text: 'Backup incremental de VM-DC01 completado correctamente (125 GB)', type: 'success' },
+            { time: '10:05', text: 'Usuario laura@zurekin.eus accedió a Nextcloud desde 192.168.10.15', type: 'success' },
+            { time: '09:58', text: 'Trend Micro detectó y bloqueó malware en VM-Web', type: 'warning' },
+            { time: '09:45', text: 'Sincronización de Active Directory completada', type: 'success' },
+            { time: '09:30', text: 'Monitorización de VLANs: Todo operativo', type: 'success' }
+        ];
+
+        function addEvent(event) {
+            const eventsList = document.getElementById('eventsList');
+            const eventItem = document.createElement('div');
+            eventItem.className = `event-item ${event.type}`;
+            eventItem.innerHTML = `<span class="event-time">${event.time}</span>${event.text}`;
+            eventsList.insertBefore(eventItem, eventsList.firstChild);
+            
+            // Mantener solo los últimos 10 eventos
+            while (eventsList.children.length > 10) {
+                eventsList.removeChild(eventsList.lastChild);
+            }
+        }
+
+        // Añadir eventos iniciales
+        events.forEach(event => addEvent(event));
+
+        // Añadir eventos aleatorios periódicamente
+        const newEvents = [
+            { text: 'Firewall bloqueó intento de conexión desde IP externa', type: 'warning' },
+            { text: 'Backup automático completado correctamente', type: 'success' },
+            { text: 'Usuario accedió a recursos compartidos', type: 'success' },
+            { text: 'Actualización de sistema aplicada', type: 'success' },
+            { text: 'Trend Micro escaneó 1.250 archivos - Sin amenazas', type: 'success' },
+            { text: 'VPN establecida desde ubicación remota', type: 'success' }
+        ];
+
+        setInterval(() => {
+            const now = new Date();
+            const time = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+            const randomEvent = newEvents[Math.floor(Math.random() * newEvents.length)];
+            addEvent({ time, text: randomEvent.text, type: randomEvent.type });
+        }, 8000);
+
+        // Calendario de backups
+        function generateBackupCalendar() {
+            const calendar = document.getElementById('backupCalendar');
+            const today = new Date().getDate();
+            
+            for (let i = 1; i <= 28; i++) {
+                const day = document.createElement('div');
+                day.className = 'day';
+                day.textContent = i;
+                
+                if (i < today) {
+                    day.classList.add('success');
+                } else if (i === today) {
+                    day.classList.add('today');
+                } else {
+                    day.classList.add('pending');
+                }
+                
+                calendar.appendChild(day);
+            }
+        }
+        generateBackupCalendar();
+
+        // Actualizar métricas de servidores
+        function updateServerMetrics() {
+            // VM-DC01
+            const cpuDC01 = Math.floor(40 + Math.random() * 15);
+            document.getElementById('cpu-dc01').textContent = cpuDC01 + '%';
+            document.getElementById('cpu-bar-dc01').style.width = cpuDC01 + '%';
+            
+            const ramDC01 = (3.0 + Math.random() * 0.5).toFixed(1);
+            document.getElementById('ram-dc01').textContent = ramDC01 + ' GB / 4 GB';
+            document.getElementById('ram-bar-dc01').style.width = (ramDC01 / 4 * 100) + '%';
+
+            // VM-Nextcloud
+            const cpuNextcloud = Math.floor(28 + Math.random() * 10);
+            document.getElementById('cpu-nextcloud').textContent = cpuNextcloud + '%';
+            document.getElementById('cpu-bar-nextcloud').style.width = cpuNextcloud + '%';
+            
+            const ramNextcloud = (2.5 + Math.random() * 0.6).toFixed(1);
+            document.getElementById('ram-nextcloud').textContent = ramNextcloud + ' GB / 4 GB';
+            document.getElementById('ram-bar-nextcloud').style.width = (ramNextcloud / 4 * 100) + '%';
+
+            // VM-Web
+            const cpuWeb = Math.floor(15 + Math.random() * 8);
+            document.getElementById('cpu-web').textContent = cpuWeb + '%';
+            document.getElementById('cpu-bar-web').style.width = cpuWeb + '%';
+            
+            const ramWeb = (1.3 + Math.random() * 0.4).toFixed(1);
+            document.getElementById('ram-web').textContent = ramWeb + ' GB / 2 GB';
+            document.getElementById('ram-bar-web').style.width = (ramWeb / 2 * 100) + '%';
+        }
+
+        // Actualizar métricas cada 2 segundos
+        setInterval(updateServerMetrics, 2000);
+    </script>
+</body>
+</html>
