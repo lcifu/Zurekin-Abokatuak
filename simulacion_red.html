@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Core - Zurekin Abokatuak</title>
+    <style>
+        :root {
+            --primary-blue: #005495;
+            --aruba-orange: #FF8300;
+            --fortinet-red: #C32026;
+            --bg-light: #f1f5f9;
+            --cli-bg: #fdf6e3; /* Solarized Light background */
+            --cli-text: #586e75;
+            --vlan10: #3b82f6;
+            --vlan20: #10b981;
+            --vlan30: #f59e0b;
+            --vlan40: #8b5cf6;
+            --vlan99: #64748b;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
+
+        body {
+            background-color: var(--bg-light);
+            color: #1e293b;
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        header {
+            background: white;
+            padding: 10px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            border-bottom: 2px solid var(--primary-blue);
+            height: 60px;
+        }
+
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 15px;
+            padding: 15px;
+            height: calc(100vh - 60px);
+        }
+
+        .left-col {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            height: 100%;
+        }
+
+        .network-map {
+            background: white;
+            border-radius: 15px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+        }
+
+        .device {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.2s;
+            width: 200px;
+        }
+
+        .device:hover { border-color: var(--primary-blue); transform: translateY(-2px); }
+        .device.active { border-color: var(--primary-blue); background: #f0f7ff; }
+        .device-icon { font-size: 2em; }
+        .device-name { font-weight: 800; font-size: 0.9em; color: var(--primary-blue); }
+
+        .vlan-section {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .vlan-card {
+            background: white;
+            padding: 10px;
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            border: 1px solid #e2e8f0;
+            border-top: 4px solid #cbd5e1;
+            transition: 0.2s;
+        }
+
+        .vlan-card:hover { transform: translateY(-2px); box-shadow: 0 5px 10px rgba(0,0,0,0.05); }
+        .vlan-10 { border-top-color: var(--vlan10); }
+        .vlan-20 { border-top-color: var(--vlan20); }
+        .vlan-30 { border-top-color: var(--vlan30); }
+        .vlan-40 { border-top-color: var(--vlan40); }
+        .vlan-99 { border-top-color: var(--vlan99); }
+        .vlan-sec { border-top-color: #334155; }
+
+        .vlan-title { font-weight: 800; font-size: 0.85em; }
+        .vlan-info { font-size: 0.7em; color: #64748b; font-family: monospace; }
+
+        .right-col {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            height: 100%;
+        }
+
+        .action-box {
+            background: white;
+            padding: 15px;
+            border-radius: 15px;
+            border: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-around;
+            gap: 10px;
+        }
+
+        .cli-window {
+            background: var(--cli-bg);
+            border-radius: 15px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border: 1px solid #d3af86;
+        }
+
+        .cli-header {
+            background: #eee8d5;
+            padding: 8px 15px;
+            font-size: 0.75em;
+            color: #586e75;
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid #d3af86;
+        }
+
+        .cli-body {
+            padding: 15px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        pre {
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.95em;
+            line-height: 1.5;
+            color: var(--cli-text);
+            white-space: pre-wrap;
+        }
+
+        .cli-keyword { color: #859900; font-weight: bold; } /* Green */
+        .cli-comment { color: #93a1a1; font-style: italic; } /* Gray */
+        .cli-value { color: #268bd2; font-weight: bold; } /* Blue */
+        .cli-alert { color: #dc322f; font-weight: bold; } /* Red */
+
+        .btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 0.8em;
+            color: white;
+            transition: 0.2s;
+        }
+
+        .btn-blue { background: var(--primary-blue); }
+        .btn-red { background: var(--fortinet-red); }
+        .btn:hover { opacity: 0.9; transform: scale(1.02); }
+
+        .status-tag {
+            background: #f1f5f9;
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 0.7em;
+            font-weight: 700;
+            color: #475569;
+            border: 1px solid #e2e8f0;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div>
+            <h1 style="color: var(--primary-blue); font-size: 1.2em;">Zurekin Abokatuak <span style="font-weight: 300;">| Network Core</span></h1>
+            <p style="font-size: 0.7em; color: #64748b; font-weight: 600;">PROYECTO FINAL ASIR 2026</p>
+        </div>
+        <div class="status-tag">
+            <span style="color: #10b981;">●</span> SISTEMA ONLINE
+        </div>
+    </header>
+
+    <div class="main-layout">
+        <div class="left-col">
+            <div class="network-map">
+                <div class="device" id="dev-fortinet" onclick="updateCLI('fortinet')">
+                    <div class="device-icon">🛡️</div>
+                    <div class="device-name">FortiGate 60F</div>
+                    <div style="font-size: 0.7em; color: #64748b;">Firewall</div>
+                </div>
+                <div style="width: 2px; height: 30px; background: #cbd5e1;"></div>
+                <div class="device" id="dev-aruba" onclick="updateCLI('aruba')">
+                    <div class="device-icon">🔌</div>
+                    <div class="device-name">Aruba CX 6200F</div>
+                    <div style="font-size: 0.7em; color: #64748b;">Core Switch</div>
+                </div>
+            </div>
+
+            <div class="vlan-section">
+                <div class="vlan-card vlan-10" onclick="updateCLI('vlan10')">
+                    <div class="vlan-title">VLAN 10</div>
+                    <div style="font-size: 0.7em;">Usuarios</div>
+                    <div class="vlan-info">192.168.10.0</div>
+                </div>
+                <div class="vlan-card vlan-20" onclick="updateCLI('vlan20')">
+                    <div class="vlan-title">VLAN 20</div>
+                    <div style="font-size: 0.7em;">Servidores</div>
+                    <div class="vlan-info">192.168.20.0</div>
+                </div>
+                <div class="vlan-card vlan-30" onclick="updateCLI('vlan30')">
+                    <div class="vlan-title">VLAN 30</div>
+                    <div style="font-size: 0.7em;">DMZ (Web)</div>
+                    <div class="vlan-info">192.168.30.0</div>
+                </div>
+                <div class="vlan-card vlan-40" onclick="updateCLI('vlan40')">
+                    <div class="vlan-title">VLAN 40</div>
+                    <div style="font-size: 0.7em;">Gestión</div>
+                    <div class="vlan-info">192.168.40.0</div>
+                </div>
+                <div class="vlan-card vlan-99" onclick="updateCLI('vlan99')">
+                    <div class="vlan-title">VLAN 99</div>
+                    <div style="font-size: 0.7em;">Invitados</div>
+                    <div class="vlan-info">192.168.99.0</div>
+                </div>
+                <div class="vlan-card vlan-sec" onclick="updateCLI('security')">
+                    <div class="vlan-title">SEGURIDAD</div>
+                    <div style="font-size: 0.7em;">Port Sec</div>
+                    <div class="vlan-info">L2 Protect</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="right-col">
+            <div class="action-box">
+                <button class="btn btn-blue" onclick="simulateTraffic()">📡 Tráfico Inter-VLAN</button>
+                <button class="btn btn-red" onclick="simulateAttack()">⚠️ Intento Intrusión</button>
+            </div>
+
+            <div class="cli-window">
+                <div class="cli-header">
+                    <span id="cli-title">Consola de Configuración</span>
+                    <span>SSH v2.0 - Terminal Clara</span>
+                </div>
+                <div class="cli-body">
+                    <pre id="cli-content"><span class="cli-comment"># Selecciona un elemento para ver su CLI...</span></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const data = {
+            fortinet: {
+                title: "FortiGate-60F # config system interface",
+                code: `<span class="cli-keyword">config system interface</span>
+    edit "vlan10"
+        set ip 192.168.10.1 255.255.255.0
+        set interface "internal"
+        set vlanid 10
+    next
+<span class="cli-keyword">config firewall policy</span>
+    edit 1
+        set name "Users_to_WAN"
+        set srcintf "vlan10"
+        set dstintf "wan1"
+        set action accept
+        set utm-status enable
+        set ips-sensor "default"
+    next`
+            },
+            aruba: {
+                title: "Aruba-6200F# show running-config",
+                code: `<span class="cli-keyword">hostname</span> Aruba-Core-Zurekin
+<span class="cli-keyword">vlan</span> 10,20,30,40,99
+<span class="cli-keyword">interface</span> 1/1/1
+    <span class="cli-keyword">description</span> UPLINK_TO_FORTINET
+    <span class="cli-keyword">vlan trunk allowed</span> 10,20,30,40,99
+<span class="cli-keyword">spanning-tree mode</span> rstp
+<span class="cli-keyword">spanning-tree priority</span> 0`
+            },
+            vlan10: {
+                title: "Aruba-6200F(config-vlan-10)#",
+                code: `<span class="cli-keyword">vlan</span> 10
+    <span class="cli-keyword">name</span> USUARIOS
+<span class="cli-keyword">interface</span> 1/1/2-1/1/10
+    <span class="cli-keyword">vlan access</span> 10
+    <span class="cli-keyword">spanning-tree port-type</span> admin-edge
+    <span class="cli-keyword">loop-protect</span>`
+            },
+            vlan20: {
+                title: "Aruba-6200F(config-vlan-20)#",
+                code: `<span class="cli-keyword">vlan</span> 20
+    <span class="cli-keyword">name</span> SERVIDORES
+<span class="cli-keyword">interface</span> 1/1/11-1/1/15
+    <span class="cli-keyword">vlan access</span> 20
+<span class="cli-comment">! IPs: AD(.10), Nextcloud(.20), Veeam(.30)</span>`
+            },
+            vlan30: {
+                title: "Aruba-6200F(config-vlan-30)#",
+                code: `<span class="cli-keyword">vlan</span> 30
+    <span class="cli-keyword">name</span> DMZ_WEB
+<span class="cli-keyword">interface</span> 1/1/16
+    <span class="cli-keyword">vlan access</span> 30`
+            },
+            vlan40: {
+                title: "Aruba-6200F(config-vlan-40)#",
+                code: `<span class="cli-keyword">vlan</span> 40
+    <span class="cli-keyword">name</span> GESTION_IT
+<span class="cli-keyword">interface</span> 1/1/20
+    <span class="cli-keyword">vlan access</span> 40`
+            },
+            vlan99: {
+                title: "Aruba-6200F(config-vlan-99)#",
+                code: `<span class="cli-keyword">vlan</span> 99
+    <span class="cli-keyword">name</span> INVITADOS
+<span class="cli-comment">! Segmento aislado en Firewall</span>`
+            },
+            security: {
+                title: "Aruba-6200F(config-if)# port-security",
+                code: `<span class="cli-keyword">port-security</span>
+<span class="cli-keyword">interface</span> 1/1/2-1/1/10
+    <span class="cli-keyword">port-security</span>
+    <span class="cli-keyword">port-security max-mac</span> 1
+    <span class="cli-keyword">port-security violation action</span> shutdown
+<span class="cli-keyword">dhcp-snooping</span>
+<span class="cli-keyword">vlan</span> 10,20,30,40,99 <span class="cli-keyword">dhcp-snooping</span>`
+            }
+        };
+
+        function updateCLI(id) {
+            document.getElementById('cli-title').innerText = data[id].title;
+            document.getElementById('cli-content').innerHTML = data[id].code;
+            document.querySelectorAll('.device').forEach(d => d.classList.remove('active'));
+            if(id === 'fortinet' || id === 'aruba') document.getElementById('dev-' + id).classList.add('active');
+        }
+
+        function simulateTraffic() {
+            document.getElementById('cli-title').innerText = "FortiGate-60F # diag debug flow";
+            document.getElementById('cli-content').innerHTML = `<span class="cli-comment"># VLAN 10 -> VLAN 20 (AD Access)</span>
+msg="vd-root:0 received a packet from vlan10."
+msg="<span class="cli-value">Permitido por política ID 5 (Internal_Trust)</span>"
+<span class="cli-comment"># El firewall valida la sesión y permite el paso.</span>`;
+        }
+
+        function simulateAttack() {
+            document.getElementById('cli-title').innerText = "ALERTA CRÍTICA - IPS";
+            document.getElementById('cli-content').innerHTML = `<span class="cli-alert">[ALERTA] Escaneo de puertos detectado</span>
+<span class="cli-comment"># Origen: 192.168.99.15 (Invitados)</span>
+<span class="cli-keyword">FortiGate-IPS:</span> Bloqueando IP 192.168.99.15.
+<span class="cli-comment"># La segmentación ha evitado el acceso a Gestión.</span>`;
+        }
+    </script>
+</body>
+</html>
