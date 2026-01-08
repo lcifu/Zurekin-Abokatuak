@@ -5,6 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simulación Backup 3-2-1 - Zurekin Abokatuak</title>
     <style>
+        :root {
+            --primary: #2C5F8D;
+            --secondary: #764ba2;
+            --success: #2e7d32;
+            --error: #c62828;
+            --warning: #f57c00;
+            --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --card-bg: rgba(255, 255, 255, 0.95);
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -12,510 +22,446 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg-gradient);
+            background-attachment: fixed;
             min-height: 100vh;
-            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            color: #333;
+            overflow-x: hidden;
+            padding: 10px;
         }
 
         .container {
-            max-width: 1400px;
+            width: 100%;
+            max-width: 1600px;
             margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            flex-grow: 1;
         }
 
+        /* Header compacto */
         .header {
             background: white;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            margin-bottom: 30px;
+            padding: 10px 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
             text-align: center;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
         }
 
         .header h1 {
-            color: #2C5F8D;
-            font-size: 2.5em;
-            margin-bottom: 10px;
+            color: var(--primary);
+            font-size: 1.4em;
+            margin: 0;
         }
 
         .header p {
             color: #666;
-            font-size: 1.1em;
+            font-size: 0.9em;
+            margin: 0;
         }
 
+        /* Panel de control compacto */
         .control-panel {
             background: white;
-            padding: 25px;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            margin-bottom: 30px;
-            text-align: center;
+            padding: 10px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
         }
 
         .btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 15px 40px;
-            font-size: 1.2em;
-            border-radius: 50px;
+            padding: 8px 16px;
+            font-size: 0.9em;
+            font-weight: 600;
+            border-radius: 6px;
             cursor: pointer;
-            transition: all 0.3s;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-            margin: 0 10px;
+            transition: all 0.2s;
+            border: none;
+            color: white;
+            background: var(--bg-gradient);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
 
-        .btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+        .btn:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
         }
 
         .btn:disabled {
             background: #ccc;
             cursor: not-allowed;
-            transform: none;
+            opacity: 0.7;
         }
 
-        .btn-danger {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-        }
+        .btn-danger { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+        .btn-success { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
 
-        .btn-success {
-            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-        }
-
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-
-        .card {
-            background: white;
-            padding: 25px;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            transition: all 0.3s;
-        }
-
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
-        }
-
-        .card-header {
-            display: flex;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .card-icon {
-            font-size: 2.5em;
-            margin-right: 15px;
-        }
-
-        .card-title {
-            font-size: 1.3em;
-            color: #333;
-            font-weight: bold;
-        }
-
-        .card-subtitle {
-            font-size: 0.9em;
-            color: #666;
-            margin-top: 5px;
-        }
-
-        .file-list {
-            list-style: none;
-            margin-top: 15px;
-        }
-
-        .file-item {
-            padding: 10px;
-            background: #f5f5f5;
-            margin-bottom: 8px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            transition: all 0.3s;
-        }
-
-        .file-item.active {
-            background: #e8f5e9;
-            border-left: 4px solid #4caf50;
-        }
-
-        .file-item.error {
-            background: #ffebee;
-            border-left: 4px solid #f44336;
-        }
-
-        .file-item.processing {
-            background: #fff3e0;
-            border-left: 4px solid #ff9800;
-            animation: pulse 1.5s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
-        }
-
-        .status-badge {
-            display: inline-block;
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 0.85em;
-            font-weight: bold;
-            margin-left: auto;
-        }
-
-        .status-idle {
-            background: #e0e0e0;
-            color: #666;
-        }
-
-        .status-processing {
-            background: #fff3e0;
-            color: #f57c00;
-        }
-
-        .status-success {
-            background: #e8f5e9;
-            color: #2e7d32;
-        }
-
-        .status-error {
-            background: #ffebee;
-            color: #c62828;
-        }
-
-        .progress-bar {
-            width: 100%;
-            height: 8px;
-            background: #e0e0e0;
-            border-radius: 10px;
-            overflow: hidden;
-            margin-top: 15px;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
-            width: 0%;
-            transition: width 0.5s;
-        }
-
-        .log-container {
-            background: white;
-            padding: 25px;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            max-height: 400px;
-            overflow-y: auto;
-        }
-
-        .log-title {
-            font-size: 1.5em;
-            color: #333;
-            margin-bottom: 15px;
-            font-weight: bold;
-        }
-
-        .log-entry {
-            padding: 10px 15px;
-            margin-bottom: 8px;
-            border-radius: 8px;
-            border-left: 4px solid;
-            animation: slideIn 0.3s;
-        }
-
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateX(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-
-        .log-info {
-            background: #e3f2fd;
-            border-color: #2196f3;
-            color: #1565c0;
-        }
-
-        .log-success {
-            background: #e8f5e9;
-            border-color: #4caf50;
-            color: #2e7d32;
-        }
-
-        .log-warning {
-            background: #fff3e0;
-            border-color: #ff9800;
-            color: #e65100;
-        }
-
-        .log-error {
-            background: #ffebee;
-            border-color: #f44336;
-            color: #c62828;
-        }
-
-        .metrics {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-top: 20px;
-        }
-
-        .metric-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 20px;
-            border-radius: 12px;
-            text-align: center;
-        }
-
-        .metric-value {
-            font-size: 2.5em;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-
-        .metric-label {
-            font-size: 0.9em;
-            opacity: 0.9;
-        }
-
+        /* Esquema Visual Rediseñado */
         .schema-visual {
             background: white;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            margin-bottom: 30px;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
 
         .schema-title {
             text-align: center;
-            font-size: 1.8em;
-            color: #2C5F8D;
-            margin-bottom: 30px;
+            font-size: 1.1em;
+            color: var(--primary);
+            margin-bottom: 10px;
             font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
         .schema-row {
             display: flex;
             justify-content: space-around;
             align-items: center;
-            margin-bottom: 40px;
+            max-width: 900px;
+            margin: 0 auto;
         }
 
         .schema-item {
             text-align: center;
             flex: 1;
-            padding: 20px;
+            padding: 5px;
             transition: all 0.3s;
+            border-radius: 8px;
         }
 
         .schema-item.active {
-            transform: scale(1.1);
+            background: #f0f7ff;
+            transform: scale(1.05);
+            box-shadow: 0 0 10px rgba(44, 95, 141, 0.2);
         }
 
         .schema-icon {
-            font-size: 4em;
-            margin-bottom: 15px;
-        }
-
-        .schema-label {
-            font-size: 1.1em;
-            color: #333;
-            font-weight: bold;
+            font-size: 2em;
             margin-bottom: 5px;
         }
 
+        .schema-label {
+            font-size: 0.85em;
+            font-weight: bold;
+            display: block;
+        }
+
         .schema-desc {
-            font-size: 0.9em;
+            font-size: 0.75em;
             color: #666;
         }
 
         .arrow {
-            font-size: 3em;
-            color: #2C5F8D;
+            font-size: 1.5em;
+            color: var(--primary);
+            opacity: 0.5;
         }
 
-        @media (max-width: 768px) {
-            .schema-row {
-                flex-direction: column;
-            }
-            .arrow {
-                transform: rotate(90deg);
-            }
+        /* Grid de Tarjetas Optimizado */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
         }
+
+        .card {
+            background: white;
+            padding: 12px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            min-height: 200px;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 8px;
+        }
+
+        .card-icon { font-size: 1.5em; }
+        .card-title { font-size: 0.95em; font-weight: bold; color: #333; }
+        .card-subtitle { font-size: 0.75em; color: #666; }
+
+        .status-badge {
+            font-size: 0.7em;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-weight: bold;
+            align-self: flex-start;
+            margin-bottom: 8px;
+        }
+
+        .status-idle { background: #eee; color: #666; }
+        .status-processing { background: #fff3e0; color: #f57c00; }
+        .status-success { background: #e8f5e9; color: #2e7d32; }
+        .status-error { background: #ffebee; color: #c62828; }
+
+        .file-list {
+            list-style: none;
+            font-size: 0.75em;
+            overflow-y: auto;
+            max-height: 100px;
+            flex-grow: 1;
+            margin-bottom: 8px;
+        }
+
+        .file-item {
+            padding: 4px 8px;
+            background: #f9f9f9;
+            margin-bottom: 3px;
+            border-radius: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .file-item.error { color: var(--error); background: #fff5f5; }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #eee;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--primary);
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        /* Métricas y Log en una fila */
+        .bottom-section {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 10px;
+            max-height: 200px;
+        }
+
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+
+        .metric-card {
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .metric-value { font-size: 1.4em; font-weight: bold; color: var(--secondary); }
+        .metric-label { font-size: 0.7em; color: #666; text-transform: uppercase; }
+
+        .log-container {
+            background: white;
+            padding: 12px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .log-title { font-size: 0.9em; font-weight: bold; margin-bottom: 5px; color: var(--primary); }
+        
+        #log {
+            font-size: 0.75em;
+            overflow-y: auto;
+            flex-grow: 1;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        .log-entry { padding: 2px 5px; border-bottom: 1px solid #f0f0f0; }
+        .log-info { color: #1565c0; }
+        .log-success { color: #2e7d32; font-weight: bold; }
+        .log-warning { color: #e65100; }
+        .log-error { color: #c62828; font-weight: bold; }
+
+        /* Responsividad */
+        @media (max-width: 1200px) {
+            .grid { grid-template-columns: repeat(2, 1fr); }
+            .bottom-section { grid-template-columns: 1fr; max-height: none; }
+            .log-container { height: 150px; }
+        }
+
+        @media (max-width: 600px) {
+            .grid { grid-template-columns: 1fr; }
+            .header { flex-direction: column; gap: 5px; }
+            .schema-row { display: none; } /* Ocultar esquema en móvil para ahorrar espacio */
+        }
+
+        /* Animaciones */
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
+        .processing-anim { animation: pulse 1s infinite; }
     </style>
 </head>
 <body>
     <div class="container">
         <!-- Header -->
         <div class="header">
-            <h1>🔒 Simulación de Backup 3-2-1</h1>
-            <p>Proyecto Zurekin Abokatuak - Despacho de Abogados | ASIR 2026 - Grupo B2</p>
+            <h1>🔒 Simulación Backup 3-2-1</h1>
+            <p>Zurekin Abokatuak | ASIR 2026</p>
         </div>
 
         <!-- Control Panel -->
         <div class="control-panel">
-            <button class="btn" id="btnStart" onclick="startSimulation()">▶️ Iniciar Simulación</button>
-            <button class="btn btn-danger" id="btnAttack" onclick="simulateAttack()" disabled>⚠️ Simular Ataque Ransomware</button>
-            <button class="btn btn-success" id="btnRecover" onclick="recoverData()" disabled>🔄 Recuperar Datos</button>
+            <button class="btn" id="btnStart" onclick="startSimulation()">▶️ Iniciar</button>
+            <button class="btn btn-danger" id="btnAttack" onclick="simulateAttack()" disabled>⚠️ Ataque</button>
+            <button class="btn btn-success" id="btnRecover" onclick="recoverData()" disabled>🔄 Recuperar</button>
             <button class="btn" id="btnReset" onclick="resetSimulation()">🔄 Reiniciar</button>
         </div>
 
         <!-- Schema Visual -->
         <div class="schema-visual">
-            <div class="schema-title">ESQUEMA 3-2-1</div>
+            <div class="schema-title">Estrategia de Protección de Datos</div>
             <div class="schema-row">
                 <div class="schema-item" id="schema-prod">
                     <div class="schema-icon">🖥️</div>
-                    <div class="schema-label">PRODUCCIÓN</div>
-                    <div class="schema-desc">Servidores VM</div>
+                    <span class="schema-label">PROD</span>
+                    <span class="schema-desc">Datos Vivos</span>
                 </div>
                 <div class="arrow">→</div>
                 <div class="schema-item" id="schema-nas">
                     <div class="schema-icon">💾</div>
-                    <div class="schema-label">BACKUP 1</div>
-                    <div class="schema-desc">NAS Synology</div>
+                    <span class="schema-label">NAS</span>
+                    <span class="schema-desc">Copia Local</span>
                 </div>
                 <div class="arrow">→</div>
                 <div class="schema-item" id="schema-ext">
                     <div class="schema-icon">💿</div>
-                    <div class="schema-label">BACKUP 2</div>
-                    <div class="schema-desc">Disco Externo</div>
+                    <span class="schema-label">USB</span>
+                    <span class="schema-desc">Otro Medio</span>
                 </div>
                 <div class="arrow">→</div>
                 <div class="schema-item" id="schema-remote">
                     <div class="schema-icon">☁️</div>
-                    <div class="schema-label">BACKUP 3</div>
-                    <div class="schema-desc">Ubicación Remota</div>
+                    <span class="schema-label">NUBE</span>
+                    <span class="schema-desc">Off-site</span>
                 </div>
             </div>
         </div>
 
         <!-- Cards Grid -->
         <div class="grid">
-            <!-- Production Card -->
-            <div class="card">
+            <!-- Production -->
+            <div class="card" id="card-prod">
                 <div class="card-header">
                     <div class="card-icon">🖥️</div>
                     <div>
                         <div class="card-title">Producción</div>
-                        <div class="card-subtitle">Servidores VM</div>
+                        <div class="card-subtitle">Servidores Principales</div>
                     </div>
                 </div>
                 <span class="status-badge status-idle" id="status-prod">Inactivo</span>
                 <ul class="file-list" id="files-prod"></ul>
-                <div class="progress-bar">
-                    <div class="progress-fill" id="progress-prod"></div>
-                </div>
+                <div class="progress-bar"><div class="progress-fill" id="progress-prod"></div></div>
             </div>
 
-            <!-- NAS Card -->
-            <div class="card">
+            <!-- NAS -->
+            <div class="card" id="card-nas">
                 <div class="card-header">
                     <div class="card-icon">💾</div>
                     <div>
-                        <div class="card-title">NAS Synology DS923+</div>
-                        <div class="card-subtitle">RAID 5 - 3.6 TB</div>
+                        <div class="card-title">NAS Synology</div>
+                        <div class="card-subtitle">Backup Local</div>
                     </div>
                 </div>
                 <span class="status-badge status-idle" id="status-nas">Inactivo</span>
                 <ul class="file-list" id="files-nas"></ul>
-                <div class="progress-bar">
-                    <div class="progress-fill" id="progress-nas"></div>
-                </div>
+                <div class="progress-bar"><div class="progress-fill" id="progress-nas"></div></div>
             </div>
 
-            <!-- External Disk Card -->
-            <div class="card">
+            <!-- External -->
+            <div class="card" id="card-ext">
                 <div class="card-header">
                     <div class="card-icon">💿</div>
                     <div>
-                        <div class="card-title">Disco Externo USB</div>
-                        <div class="card-subtitle">Medio Diferente</div>
+                        <div class="card-title">Disco USB</div>
+                        <div class="card-subtitle">Medio Físico</div>
                     </div>
                 </div>
                 <span class="status-badge status-idle" id="status-ext">Inactivo</span>
                 <ul class="file-list" id="files-ext"></ul>
-                <div class="progress-bar">
-                    <div class="progress-fill" id="progress-ext"></div>
-                </div>
+                <div class="progress-bar"><div class="progress-fill" id="progress-ext"></div></div>
             </div>
 
-            <!-- Remote Location Card -->
-            <div class="card">
+            <!-- Remote -->
+            <div class="card" id="card-remote">
                 <div class="card-header">
                     <div class="card-icon">☁️</div>
                     <div>
-                        <div class="card-title">Ubicación Remota</div>
-                        <div class="card-subtitle">Fuera del Sitio</div>
+                        <div class="card-title">Cloud Backup</div>
+                        <div class="card-subtitle">Ubicación Remota</div>
                     </div>
                 </div>
                 <span class="status-badge status-idle" id="status-remote">Inactivo</span>
                 <ul class="file-list" id="files-remote"></ul>
-                <div class="progress-bar">
-                    <div class="progress-fill" id="progress-remote"></div>
+                <div class="progress-bar"><div class="progress-fill" id="progress-remote"></div></div>
+            </div>
+        </div>
+
+        <!-- Bottom Section -->
+        <div class="bottom-section">
+            <div class="metrics">
+                <div class="metric-card">
+                    <div class="metric-value" id="metric-files">0</div>
+                    <div class="metric-label">Archivos</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="metric-backups">0/3</div>
+                    <div class="metric-label">Copias</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="metric-rto">--</div>
+                    <div class="metric-label">RTO</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="metric-rpo">--</div>
+                    <div class="metric-label">RPO</div>
                 </div>
             </div>
-        </div>
 
-        <!-- Metrics -->
-        <div class="metrics">
-            <div class="metric-card">
-                <div class="metric-value" id="metric-files">0</div>
-                <div class="metric-label">Expedientes</div>
+            <div class="log-container">
+                <div class="log-title">📋 Registro de Actividad</div>
+                <div id="log"></div>
             </div>
-            <div class="metric-card">
-                <div class="metric-value" id="metric-backups">0/3</div>
-                <div class="metric-label">Backups Completados</div>
-            </div>
-            <div class="metric-card">
-                <div class="metric-value" id="metric-rto">--</div>
-                <div class="metric-label">RTO (< 4h)</div>
-            </div>
-            <div class="metric-card">
-                <div class="metric-value" id="metric-rpo">--</div>
-                <div class="metric-label">RPO (24h)</div>
-            </div>
-        </div>
-
-        <!-- Log Container -->
-        <div class="log-container">
-            <div class="log-title">📋 Registro de Actividad</div>
-            <div id="log"></div>
         </div>
     </div>
 
     <script>
         const files = [
-            'Expediente_Civil_2026_001.pdf',
-            'Expediente_Penal_2026_002.pdf',
-            'Expediente_Laboral_2026_003.pdf',
-            'Expediente_Mercantil_2026_004.pdf',
-            'Expediente_Administrativo_2026_005.pdf',
-            'Contrato_Arrendamiento_2026_006.pdf',
-            'Demanda_Divorcio_2026_007.pdf',
-            'Recurso_Apelacion_2026_008.pdf'
+            'Expediente_Civil_001.pdf', 'Expediente_Penal_002.pdf',
+            'Expediente_Laboral_003.pdf', 'Expediente_Mercantil_004.pdf',
+            'Expediente_Admin_005.pdf', 'Contrato_Arrend_006.pdf',
+            'Demanda_Divorcio_007.pdf', 'Recurso_Apel_008.pdf'
         ];
 
         let simulationState = {
-            filesCreated: false,
             backupsCompleted: 0,
-            attackSimulated: false,
-            dataRecovered: false,
             rtoStart: null
         };
 
@@ -524,8 +470,7 @@
             const entry = document.createElement('div');
             entry.className = `log-entry log-${type}`;
             entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
-            logDiv.appendChild(entry);
-            logDiv.scrollTop = logDiv.scrollHeight;
+            logDiv.prepend(entry); // Usar prepend para ver lo último arriba
         }
 
         function updateStatus(location, status) {
@@ -533,8 +478,7 @@
             statusEl.className = `status-badge status-${status}`;
             statusEl.textContent = status === 'idle' ? 'Inactivo' :
                                   status === 'processing' ? 'Procesando...' :
-                                  status === 'success' ? 'Completado' :
-                                  'Error';
+                                  status === 'success' ? 'Protegido' : 'Error';
         }
 
         function updateProgress(location, percent) {
@@ -546,7 +490,7 @@
             container.innerHTML = '';
             fileList.forEach(file => {
                 const li = document.createElement('li');
-                li.className = 'file-item active';
+                li.className = 'file-item';
                 li.innerHTML = `📄 ${file}`;
                 container.appendChild(li);
             });
@@ -563,137 +507,86 @@
 
         function activateSchema(location) {
             document.querySelectorAll('.schema-item').forEach(el => el.classList.remove('active'));
-            document.getElementById(`schema-${location}`).classList.add('active');
+            if(location) document.getElementById(`schema-${location}`).classList.add('active');
         }
 
-        async function sleep(ms) {
-            return new Promise(resolve => setTimeout(resolve, ms));
-        }
+        const sleep = ms => new Promise(r => setTimeout(r, ms));
 
         async function startSimulation() {
             document.getElementById('btnStart').disabled = true;
-            log('🚀 Iniciando simulación de backup 3-2-1', 'info');
+            log('🚀 Iniciando simulación 3-2-1', 'info');
             
-            // Step 1: Create files in production
-            log('📊 Creando expedientes en servidores de producción...', 'info');
             activateSchema('prod');
             updateStatus('prod', 'processing');
-            
-            for (let i = 0; i <= 100; i += 20) {
+            for (let i = 0; i <= 100; i += 25) {
                 updateProgress('prod', i);
-                await sleep(200);
+                await sleep(150);
             }
-            
             addFiles('prod', files);
             updateStatus('prod', 'success');
             document.getElementById('metric-files').textContent = files.length;
-            log(`✅ ${files.length} expedientes creados en producción`, 'success');
-            simulationState.filesCreated = true;
+            log('✅ Datos en producción listos', 'success');
             
-            await sleep(1000);
+            await sleep(500);
+            await performBackup('nas', 'NAS Synology', 1);
+            await performBackup('ext', 'Disco USB', 2);
+            await performBackup('remote', 'Cloud', 3);
             
-            // Step 2: Backup to NAS
-            await performBackup('nas', 'NAS Synology DS923+', 1);
-            
-            // Step 3: Backup to External
-            await performBackup('ext', 'Disco Externo USB', 2);
-            
-            // Step 4: Backup to Remote
-            await performBackup('remote', 'Ubicación Remota', 3);
-            
-            log('🎉 Esquema 3-2-1 completado exitosamente', 'success');
-            log('✅ Todas las copias verificadas e íntegras', 'success');
+            log('🎉 Estrategia 3-2-1 completada', 'success');
             document.getElementById('btnAttack').disabled = false;
+            activateSchema(null);
         }
 
         async function performBackup(location, name, number) {
-            log(`🔄 Iniciando backup ${number}/3: ${name}...`, 'info');
+            log(`🔄 Backup ${number}/3: ${name}...`, 'info');
             activateSchema(location);
             updateStatus(location, 'processing');
-            
-            for (let i = 0; i <= 100; i += 10) {
+            for (let i = 0; i <= 100; i += 20) {
                 updateProgress(location, i);
-                await sleep(300);
+                await sleep(200);
             }
-            
             addFiles(location, files);
             updateStatus(location, 'success');
             simulationState.backupsCompleted++;
             document.getElementById('metric-backups').textContent = `${simulationState.backupsCompleted}/3`;
-            log(`✅ Backup ${number}/3 completado en ${name}`, 'success');
-            
-            await sleep(1000);
+            log(`✅ Backup ${number} OK`, 'success');
+            await sleep(400);
         }
 
         async function simulateAttack() {
             document.getElementById('btnAttack').disabled = true;
-            log('⚠️ ALERTA: Detectado ransomware en el sistema', 'warning');
-            log('🔒 Los expedientes están siendo cifrados...', 'error');
-            
+            log('⚠️ ALERTA: Ransomware detectado!', 'warning');
             activateSchema('prod');
             updateStatus('prod', 'error');
-            
-            await sleep(1000);
-            
-            for (let i = 1; i <= 3; i++) {
-                log(`🔒 Cifrando archivos... ${i * 33}%`, 'error');
-                await sleep(800);
-            }
-            
+            await sleep(800);
             clearFiles('prod');
             updateProgress('prod', 0);
-            log('❌ DATOS DE PRODUCCIÓN PERDIDOS', 'error');
-            log('❌ Todos los expedientes han sido cifrados', 'error');
-            log('⏱️ RTO activado: Tiempo máximo de recuperación < 4 horas', 'warning');
-            
-            simulationState.attackSimulated = true;
+            log('❌ Datos de producción cifrados', 'error');
             simulationState.rtoStart = Date.now();
             document.getElementById('btnRecover').disabled = false;
         }
 
         async function recoverData() {
             document.getElementById('btnRecover').disabled = true;
-            log('🔄 Iniciando proceso de recuperación desde backup...', 'info');
-            log('📥 Fuente: NAS Synology DS923+ (backup más reciente)', 'info');
-            
+            log('🔄 Recuperando desde NAS...', 'info');
             activateSchema('nas');
             updateStatus('prod', 'processing');
-            
-            await sleep(1000);
-            
-            log('🔄 Restaurando expedientes desde NAS...', 'info');
-            
-            for (let i = 0; i <= 100; i += 20) {
+            for (let i = 0; i <= 100; i += 25) {
                 updateProgress('prod', i);
-                await sleep(400);
+                await sleep(300);
             }
-            
             addFiles('prod', files);
             updateStatus('prod', 'success');
-            
-            const rtoTime = ((Date.now() - simulationState.rtoStart) / 1000).toFixed(2);
-            const rtoMinutes = (rtoTime / 60).toFixed(2);
-            
-            log(`✅ Recuperación completada: ${files.length} expedientes restaurados`, 'success');
-            log(`⏱️ Tiempo de recuperación: ${rtoTime} segundos (${rtoMinutes} minutos)`, 'success');
-            log(`✅ RTO CUMPLIDO: ${rtoMinutes} minutos (< 4 horas)`, 'success');
-            log(`✅ RPO CUMPLIDO: Pérdida de datos = 0 horas (< 24 horas)`, 'success');
-            log('🎉 Sistema operativo - Negocio puede continuar', 'success');
-            
-            document.getElementById('metric-rto').textContent = `${rtoMinutes} min`;
+            const rto = ((Date.now() - simulationState.rtoStart) / 1000).toFixed(1);
+            log(`✅ Restauración exitosa en ${rto}s`, 'success');
+            document.getElementById('metric-rto').textContent = `${rto}s`;
             document.getElementById('metric-rpo').textContent = '0h';
-            
-            simulationState.dataRecovered = true;
             activateSchema('prod');
         }
 
-        function resetSimulation() {
-            location.reload();
-        }
+        function resetSimulation() { location.reload(); }
 
-        // Initialize
-        log('✨ Sistema de simulación de backup 3-2-1 listo', 'info');
-        log('👉 Presiona "Iniciar Simulación" para comenzar', 'info');
+        log('✨ Sistema listo. Presione Iniciar.', 'info');
     </script>
 </body>
 </html>
